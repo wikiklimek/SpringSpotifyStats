@@ -42,6 +42,7 @@ spring:
               - user-read-recently-played
               - user-library-read
               - user-read-currently-playing
+              - user-read-private
             client-name: Spotify
         provider:
           spotify:
