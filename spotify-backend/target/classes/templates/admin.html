@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Administratora</title>
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #121212; color: white; padding: 40px; margin: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #282828; padding-bottom: 20px; margin-bottom: 30px; }
+        h1 { margin: 0; color: #1db954; }
+        h2 { color: #ff9800; border-bottom: 2px solid #282828; padding-bottom: 10px; margin-top: 50px; }
+
+        table { width: 100%; border-collapse: collapse; background-color: #181818; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #282828; }
+        th { background-color: #282828; font-weight: bold; text-transform: uppercase; font-size: 0.9em; color: #b3b3b3; }
+        tr:hover { background-color: #202020; }
+
+        .btn-logout { padding: 10px 20px; background-color: #e91429; color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        .btn-logout:hover { background-color: #c01021; }
+
+        .btn-approve { background-color: #1db954; color: black; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-reject { background-color: #e91429; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-approve:hover { background-color: #1ed760; }
+        .btn-reject:hover { background-color: #c01021; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Zarządzanie Użytkownikami</h1>
+    <form th:action="@{/logout}" method="post">
+        <button type="submit" class="btn-logout">Wyloguj Admina</button>
+    </form>
+</div>
+
+<!-- Tabela 1: Wszyscy Użytkownicy -->
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Spotify ID</th>
+        <th>Nazwa Konta</th>
+        <th>Adres Email</th>
+        <th>Ostatnie Logowanie</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="user : ${users}">
+        <td th:text="${user.id}">1</td>
+        <td th:text="${user.spotifyId}">spotify_123</td>
+        <td th:text="${user.displayName}">Wiktoria</td>
+        <td th:text="${user.email}">wiki@example.com</td>
+        <td th:text="${user.lastLoginDate}">2026-08-16</td>
+    </tr>
+    </tbody>
+</table>
+
+<!-- Tabela 2: Prośby RODO (Oczekujące) -->
+<h2>Zgłoszenia RODO (Oczekujące prośby o usunięcie)</h2>
+<table>
+    <thead>
+    <tr>
+        <th>ID Zgłoszenia</th>
+        <th>Spotify ID (Kto)</th>
+        <th>Żądanie</th>
+        <th>Data Złożenia</th>
+        <th>Decyzja</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="req : ${pendingRequests}">
+        <td th:text="${req.id}">1</td>
+        <td th:text="${req.spotifyId}" style="font-weight: bold;">spotify_user_1</td>
+        <td th:text="'Usuń starsze niż: ' + ${req.daysToKeep} + ' dni'">Usuń starsze niż: 7 dni</td>
+        <td th:text="${#temporals.format(req.requestDate, 'yyyy-MM-dd HH:mm')}">2026-08-16 12:00</td>
+        <td style="display: flex; gap: 10px;">
+            <form th:action="@{/admin/request/{id}/approve(id=${req.id})}" method="post">
+                <button type="submit" class="btn-approve">Akceptuj (Usuń)</button>
+            </form>
+            <form th:action="@{/admin/request/{id}/reject(id=${req.id})}" method="post">
+                <button type="submit" class="btn-reject">Odrzuć</button>
+            </form>
+        </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(pendingRequests)}">
+        <td colspan="5" style="text-align: center; color: #b3b3b3; padding: 30px;">
+            Brak oczekujących próśb od użytkowników. Dobra robota! 🎉
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>
