@@ -2,34 +2,34 @@ package com.spotify.wrapped.controller;
 
 import com.spotify.wrapped.document.DailyTopArtistsDocument;
 import com.spotify.wrapped.document.DailyTopTracksDocument;
+import com.spotify.wrapped.document.PlaybackHistoryDocument;
+import com.spotify.wrapped.entity.DeletionRequestEntity;
 import com.spotify.wrapped.entity.UserEntity;
 import com.spotify.wrapped.model.Artist;
 import com.spotify.wrapped.model.CurrentlyPlayingResponse;
 import com.spotify.wrapped.model.Track;
 import com.spotify.wrapped.repository.DailyTopArtistsRepository;
 import com.spotify.wrapped.repository.DailyTopTracksRepository;
+import com.spotify.wrapped.repository.PlaybackHistoryRepository;
 import com.spotify.wrapped.repository.UserRepository;
 import com.spotify.wrapped.service.PlaybackSyncService;
+import com.spotify.wrapped.service.PrivacyService;
 import com.spotify.wrapped.service.SpotifyClientService;
 import com.spotify.wrapped.service.SpotifyStatsService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-// ... (istniejące importy)
-import com.spotify.wrapped.service.PrivacyService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-
-@Controller
+@RestController
 public class SpotifyController {
 
     private final SpotifyClientService spotifyService;
@@ -38,131 +38,127 @@ public class SpotifyController {
     private final DailyTopArtistsRepository topArtistsRepository;
     private final SpotifyStatsService statsService;
     private final PlaybackSyncService playbackSyncService;
-    private final PrivacyService privacyService; // 1. DODANE: Serwis RODO
+    private final PrivacyService privacyService;
+    private final PlaybackHistoryRepository playbackHistoryRepository;
 
-    public SpotifyController(SpotifyClientService spotifyService,
-                             UserRepository userRepository,
-                             DailyTopTracksRepository topTracksRepository,
-                             DailyTopArtistsRepository topArtistsRepository,
-                             SpotifyStatsService statsService,
-                             PlaybackSyncService playbackSyncService,
-                             PrivacyService privacyService) { // 2. DODANE do konstruktora
+    public SpotifyController(SpotifyClientService spotifyService, UserRepository userRepository,
+                             DailyTopTracksRepository topTracksRepository, DailyTopArtistsRepository topArtistsRepository,
+                             SpotifyStatsService statsService, PlaybackSyncService playbackSyncService,
+                             PrivacyService privacyService, PlaybackHistoryRepository playbackHistoryRepository) {
         this.spotifyService = spotifyService;
         this.userRepository = userRepository;
         this.topTracksRepository = topTracksRepository;
         this.topArtistsRepository = topArtistsRepository;
         this.statsService = statsService;
         this.playbackSyncService = playbackSyncService;
-        this.privacyService = privacyService; // 3. DODANE
+        this.privacyService = privacyService;
+        this.playbackHistoryRepository = playbackHistoryRepository;
     }
 
-    // 1. Zwykłe wejście - tylko zapisuje usera i wyświetla bazowy szablon/profil
-    @GetMapping("/user-info")
-    public String getUserInfo(@RegisteredOAuth2AuthorizedClient("spotify") OAuth2AuthorizedClient authorizedClient, Model model) {
+    // Bezpieczna metoda wyciągająca ID Spotify bezpośrednio z pamięci RAM serwera
+    // Bezpieczne pobieranie ID z sesji RAM
+    private String getSafeSpotifyIdFromSession() {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof org.springframework.security.oauth2.core.user.OAuth2User oauth2User) {
+            return oauth2User.getAttribute("id");
+        }
+        throw new IllegalArgumentException("Brak sesji użytkownika");
+    }
+
+    private String getAndSaveUserSpotifyId(OAuth2AuthorizedClient authorizedClient) {
         String token = authorizedClient.getAccessToken().getTokenValue();
         var userProfile = spotifyService.getUserProfile(token);
+        String spotifyId = userProfile.id();
 
-        Optional<UserEntity> existingUser = userRepository.findBySpotifyId(userProfile.id());
+        Optional<UserEntity> existingUser = userRepository.findBySpotifyId(spotifyId);
         if (existingUser.isPresent()) {
             UserEntity user = existingUser.get();
             user.setLastLoginDate(LocalDate.now());
             userRepository.save(user);
         } else {
-            userRepository.save(new UserEntity(userProfile.id(), userProfile.displayName(), userProfile.email(), LocalDate.now()));
+            userRepository.save(new UserEntity(spotifyId, userProfile.displayName(), userProfile.email(), LocalDate.now()));
         }
-
-        model.addAttribute("user", userProfile);
-        return "user-info"; // Tu na razie możesz mieć samo powitanie w HTML
+        return spotifyId;
     }
 
-    // 2. Endpoint tylko dla piosenek (Zwraca JSON)
+    // PONIŻSZE ENDPOINTY GADAJĄ ZE SPOTIFY (Wymagają tokenu)
     @GetMapping("/api/top-tracks")
-    @ResponseBody
     public List<Track> getTopTracks(@RegisteredOAuth2AuthorizedClient("spotify") OAuth2AuthorizedClient authorizedClient) {
         String token = authorizedClient.getAccessToken().getTokenValue();
-        String spotifyId = spotifyService.getUserProfile(token).id();
+        String spotifyId = getAndSaveUserSpotifyId(authorizedClient);
         LocalDate today = LocalDate.now();
 
-        return topTracksRepository.findBySpotifyIdAndDate(spotifyId, today)
-                .map(DailyTopTracksDocument::getTopTracks)
-                .orElseGet(() -> {
-                    List<Track> tracks = spotifyService.getTopTracks(token, 10);
-                    topTracksRepository.save(new DailyTopTracksDocument(spotifyId, today, tracks));
-                    return tracks;
-                });
+        return topTracksRepository.findBySpotifyIdAndDate(spotifyId, today).map(DailyTopTracksDocument::getTopTracks).orElseGet(() -> {
+            List<Track> tracks = spotifyService.getTopTracks(token, 10);
+            topTracksRepository.save(new DailyTopTracksDocument(spotifyId, today, tracks));
+            return tracks;
+        });
     }
 
-    // 3. Endpoint tylko dla artystów (Zwraca JSON)
     @GetMapping("/api/top-artists")
-    @ResponseBody
     public List<Artist> getTopArtists(@RegisteredOAuth2AuthorizedClient("spotify") OAuth2AuthorizedClient authorizedClient) {
         String token = authorizedClient.getAccessToken().getTokenValue();
-        String spotifyId = spotifyService.getUserProfile(token).id();
+        String spotifyId = getAndSaveUserSpotifyId(authorizedClient);
         LocalDate today = LocalDate.now();
 
-        return topArtistsRepository.findBySpotifyIdAndDate(spotifyId, today)
-                .map(DailyTopArtistsDocument::getTopArtists)
-                .orElseGet(() -> {
-                    List<Artist> artists = spotifyService.getTopArtists(token, 10);
-                    topArtistsRepository.save(new DailyTopArtistsDocument(spotifyId, today, artists));
-                    return artists;
-                });
+        return topArtistsRepository.findBySpotifyIdAndDate(spotifyId, today).map(DailyTopArtistsDocument::getTopArtists).orElseGet(() -> {
+            List<Artist> artists = spotifyService.getTopArtists(token, 10);
+            topArtistsRepository.save(new DailyTopArtistsDocument(spotifyId, today, artists));
+            return artists;
+        });
     }
 
-    // 4. Endpoint dla Gatunków (oblicza na bieżąco na podstawie artystów) (Zwraca JSON)
     @GetMapping("/api/top-genres")
-    @ResponseBody
     public Map<String, Long> getTopGenres(@RegisteredOAuth2AuthorizedClient("spotify") OAuth2AuthorizedClient authorizedClient) {
-        // Najpierw wywołujemy naszą metodę wyżej, żeby upewnić się, że mamy artystów (z DB lub z API)
         List<Artist> topArtists = getTopArtists(authorizedClient);
         return statsService.calculateTopGenres(topArtists, 5);
     }
 
-    // 5. Endpoint Synchronizujący historię (Recently Played) (Zwraca JSON informujący o statusie)
-    @GetMapping("/api/recently-played/sync")
-    @ResponseBody
-    public String syncRecentlyPlayed(@RegisteredOAuth2AuthorizedClient("spotify") OAuth2AuthorizedClient authorizedClient) {
-        String token = authorizedClient.getAccessToken().getTokenValue();
-        String spotifyId = spotifyService.getUserProfile(token).id();
-
-        int added = playbackSyncService.syncRecentPlaybacks(token, spotifyId);
-        return "Zsynchronizowano pomyślnie. Nowe utwory: " + added;
-    }
-
-    // 6. Endpoint dla Aktualnie Odtwarzanego Utworu (Currently Playing) (Zwraca JSON)
     @GetMapping("/api/currently-playing")
-    @ResponseBody
-    public CurrentlyPlayingResponse getCurrentlyPlaying(@RegisteredOAuth2AuthorizedClient("spotify") OAuth2AuthorizedClient authorizedClient) {
+    public org.springframework.http.ResponseEntity<?> getCurrentlyPlaying(@RegisteredOAuth2AuthorizedClient("spotify") OAuth2AuthorizedClient authorizedClient) {
         String token = authorizedClient.getAccessToken().getTokenValue();
-        return spotifyService.getCurrentlyPlaying(token);
+        CurrentlyPlayingResponse response = spotifyService.getCurrentlyPlaying(token);
+        if (response == null || response.item() == null) {
+            return org.springframework.http.ResponseEntity.noContent().build(); // 204
+        }
+        return org.springframework.http.ResponseEntity.ok(response);
     }
 
-    // --- NOWE ENDPOINTY DO ZARZĄDZANIA PRYWATNOŚCIĄ (RODO) ---
+    @GetMapping("/api/recently-played/sync")
+    public Map<String, String> syncRecentlyPlayed(@RegisteredOAuth2AuthorizedClient("spotify") OAuth2AuthorizedClient authorizedClient) {
+        String token = authorizedClient.getAccessToken().getTokenValue();
+        String spotifyId = getAndSaveUserSpotifyId(authorizedClient);
+        int added = playbackSyncService.syncRecentPlaybacks(token, spotifyId);
+        return Map.of("message", "Zsynchronizowano pomyślnie. Nowe utwory: " + added);
+    }
 
-    // 7. Endpoint wysyłający prośbę do Admina
+    // PONIŻSZE ENDPOINTY GADAJĄ TYLKO Z BAZĄ DANYCH (Nie potrzebują tokenu Spotify!)
+    // ======= ENDPOINTY BAZY DANYCH (BEZ TOKENA SPOTIFY) =======
+
     @PostMapping("/api/privacy/request-deletion")
-    @ResponseBody
-    public String requestDeletion(
-            @RegisteredOAuth2AuthorizedClient("spotify") OAuth2AuthorizedClient authorizedClient,
-            @RequestParam(defaultValue = "7") int days) {
-
-        String token = authorizedClient.getAccessToken().getTokenValue();
-        String spotifyId = spotifyService.getUserProfile(token).id();
-
-        // Zapisujemy nową prośbę w PostgreSQL i zwracamy komunikat tekstowy
-        return privacyService.createDeletionRequest(spotifyId, days);
+    public Map<String, String> requestDeletion(@RequestParam(defaultValue = "7") int days) {
+        String spotifyId = getSafeSpotifyIdFromSession(); // TYLKO z sesji!
+        return Map.of("message", privacyService.createDeletionRequest(spotifyId, days));
     }
 
-    // 8. Endpoint wycofujący prośbę
     @PostMapping("/api/privacy/withdraw")
-    @ResponseBody
-    public String withdrawDeletionRequest(
-            @RegisteredOAuth2AuthorizedClient("spotify") OAuth2AuthorizedClient authorizedClient) {
+    public Map<String, String> withdrawDeletionRequest() {
+        String spotifyId = getSafeSpotifyIdFromSession(); // TYLKO z sesji!
+        return Map.of("message", privacyService.withdrawRequest(spotifyId));
+    }
 
-        String token = authorizedClient.getAccessToken().getTokenValue();
-        String spotifyId = spotifyService.getUserProfile(token).id();
+    @GetMapping("/api/history")
+    public List<PlaybackHistoryDocument> getHistory() {
+        String spotifyId = getSafeSpotifyIdFromSession(); // TYLKO z sesji!
+        return playbackHistoryRepository.findAllBySpotifyIdOrderByPlayedAtDesc(spotifyId);
+    }
 
-        // Aktualizujemy prośbę w PostgreSQL na "WITHDRAWN" i zwracamy komunikat
-        return privacyService.withdrawRequest(spotifyId);
+    @GetMapping("/api/privacy/status")
+    public DeletionRequestEntity getPrivacyStatus() {
+        String spotifyId = getSafeSpotifyIdFromSession(); // TYLKO z sesji!
+        return privacyService.getPendingRequests().stream()
+                .filter(req -> req.getSpotifyId().equals(spotifyId))
+                .findFirst()
+                .orElse(null);
     }
 }

@@ -1,49 +1,99 @@
 package com.spotify.wrapped.controller;
 
+import com.spotify.wrapped.document.DailyTopArtistsDocument;
+import com.spotify.wrapped.document.DailyTopTracksDocument;
+import com.spotify.wrapped.entity.DeletionRequestEntity;
+import com.spotify.wrapped.entity.UserEntity;
+import com.spotify.wrapped.repository.DailyTopArtistsRepository;
+import com.spotify.wrapped.repository.DailyTopTracksRepository;
+import com.spotify.wrapped.repository.PlaybackHistoryRepository;
 import com.spotify.wrapped.repository.UserRepository;
 import com.spotify.wrapped.service.PrivacyService;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
-@Controller
-@RequestMapping("/admin") // Prefix dla wszystkich ścieżek w tej klasie
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/admin")
 public class AdminController {
 
     private final UserRepository userRepository;
-    private final PrivacyService privacyService; // Nasz nowy serwis
+    private final PrivacyService privacyService;
+    private final DailyTopTracksRepository tracksRepo;
+    private final DailyTopArtistsRepository artistsRepo;
+    private final PlaybackHistoryRepository historyRepo;
 
-    public AdminController(UserRepository userRepository, PrivacyService privacyService) {
+    public AdminController(UserRepository userRepository, PrivacyService privacyService,
+                           DailyTopTracksRepository tracksRepo, DailyTopArtistsRepository artistsRepo, PlaybackHistoryRepository historyRepo) {
         this.userRepository = userRepository;
         this.privacyService = privacyService;
+        this.tracksRepo = tracksRepo;
+        this.artistsRepo = artistsRepo;
+        this.historyRepo = historyRepo;
     }
 
-    // Zwraca widok panelu
-    @GetMapping
-    public String getAdminPanel(Model model) {
-        // Lista wszystkich użytkowników z bazy SQL
-        model.addAttribute("users", userRepository.findAll());
-
-        // Lista Oczekujących Próśb (PENDING) z bazy SQL
-        model.addAttribute("pendingRequests", privacyService.getPendingRequests());
-
-        return "admin";
+    @GetMapping("/requests")
+    public List<DeletionRequestEntity> getPendingRequestsJson() {
+        return privacyService.getPendingRequests();
     }
 
-    // Endpoint do akceptacji prośby
     @PostMapping("/request/{id}/approve")
-    public String approveRequest(@PathVariable Long id) {
-        privacyService.approveRequest(id);
-        return "redirect:/admin"; // Odśwież stronę po kliknięciu
+    public Map<String, Long> approveRequest(@PathVariable Long id) {
+        long deletedCount = privacyService.approveRequest(id);
+        return Map.of("deletedEntries", deletedCount);
     }
 
-    // Endpoint do odrzucenia prośby
     @PostMapping("/request/{id}/reject")
-    public String rejectRequest(@PathVariable Long id) {
+    public void rejectRequest(@PathVariable Long id) {
         privacyService.rejectRequest(id);
-        return "redirect:/admin"; // Odśwież stronę po kliknięciu
+    }
+
+    // LISTA UŻYTKOWNIKÓW Z LICZBĄ DOKUMENTÓW
+    @GetMapping("/users")
+    public List<Map<String, Object>> getAllUsers() {
+        return userRepository.findAll().stream().map(user -> {
+            long trackDocs = tracksRepo.countBySpotifyId(user.getSpotifyId());
+            long artistDocs = artistsRepo.countBySpotifyId(user.getSpotifyId());
+            return Map.<String, Object>of(
+                    "spotifyId", user.getSpotifyId(),
+                    "displayName", user.getDisplayName(),
+                    "email", user.getEmail() != null ? user.getEmail() : "Brak",
+                    "totalDocs", trackDocs + artistDocs
+            );
+        }).collect(Collectors.toList());
+    }
+
+    // SZCZEGÓŁY UŻYTKOWNIKA (DOKUMENTY ARTISTS/TRACKS)
+    @GetMapping("/users/{spotifyId}/docs")
+    public Map<String, Object> getUserDocs(@PathVariable String spotifyId) {
+        List<DailyTopTracksDocument> tracks = tracksRepo.findAllBySpotifyId(spotifyId);
+        List<DailyTopArtistsDocument> artists = artistsRepo.findAllBySpotifyId(spotifyId);
+        return Map.of("tracks", tracks, "artists", artists);
+    }
+
+    // BEZPOŚREDNIE USUWANIE DANYCH (GLOBALNE LUB DLA USERA)
+    @DeleteMapping("/records")
+    public Map<String, Long> deleteRecords(@RequestParam int days, @RequestParam(required = false) String spotifyId) {
+        LocalDate cutoffDate = LocalDate.now().minusDays(days);
+        //Instant cutoffInstant = Instant.now().minus(days, ChronoUnit.DAYS);
+
+        long deletedTracks = 0, deletedArtists = 0 /*, deletedHistory = 0*/;
+
+        if (spotifyId != null && !spotifyId.isEmpty()) {
+            deletedTracks = tracksRepo.deleteBySpotifyIdAndDateBefore(spotifyId, cutoffDate);
+            deletedArtists = artistsRepo.deleteBySpotifyIdAndDateBefore(spotifyId, cutoffDate);
+            //deletedHistory = historyRepo.deleteBySpotifyIdAndPlayedAtBefore(spotifyId, cutoffInstant);
+        } else {
+            deletedTracks = tracksRepo.deleteByDateBefore(cutoffDate);
+            deletedArtists = artistsRepo.deleteByDateBefore(cutoffDate);
+            //deletedHistory = historyRepo.deleteByPlayedAtBefore(cutoffInstant);
+        }
+
+        return Map.of("deletedEntries", deletedTracks + deletedArtists /*+ deletedHistory*/);
     }
 }

@@ -2,6 +2,7 @@ package com.spotify.wrapped.config;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.client.ClientAuthorizationRequiredException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -10,18 +11,25 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Przechwytuje np. nasze błędy z PrivacyService (IllegalArgumentException)
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<?> handleIllegalArgumentException(IllegalArgumentException ex) {
-        // Zwracamy kod 400 (Bad Request) i przyjazny JSON dla frontendu
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+    // 1. Łapiemy błąd wygasłego tokena Spotify!
+    @ExceptionHandler(ClientAuthorizationRequiredException.class)
+    public ResponseEntity<?> handleSpotifyTokenExpired(ClientAuthorizationRequiredException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", "musisz się zalogować ponownie"));
     }
 
-    // Fallback - Przechwytuje WSZYSTKIE inne niespodziewane błędy z całej aplikacji
+    // 2. Łapiemy błędy logiki biznesowej (np. złe parametry)
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<?> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", ex.getMessage()));
+    }
+
+    // 3. Fallback: Wszystkie inne błędy (np. błąd bazy danych)
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> handleAllOtherExceptions(Exception ex) {
-        System.err.println("KRYTYCZNY BŁĄD SYSTEMU: " + ex.getMessage());
+    public ResponseEntity<?> handleAllExceptions(Exception ex) {
+        ex.printStackTrace();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "Wystąpił nieoczekiwany błąd serwera. Spróbuj ponownie później."));
+                .body(Map.of("error", "błąd bazy danych lub serwera"));
     }
 }

@@ -5,13 +5,16 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.List;
 
 @Repository
 public interface PlaybackHistoryRepository extends MongoRepository<PlaybackHistoryDocument, String> {
-
-    // Spring sam zbuduje zapytanie sprawdzające, czy podany użytkownik ma w bazie wpis z dokładnie tą datą
     boolean existsBySpotifyIdAndPlayedAt(String spotifyId, Instant playedAt);
 
-    // NOWA METODA: Usuń wszystko dla danego usera, co było słuchane PRZED daną datą
-    void deleteBySpotifyIdAndPlayedAtBefore(String spotifyId, Instant dateBefore);
+    // Zmieniamy void na long, aby wiedzieć ile usunięto
+    long deleteBySpotifyIdAndPlayedAtBefore(String spotifyId, Instant dateBefore);
+    long deleteByPlayedAtBefore(Instant dateBefore);
+
+    // Do wyświetlania historii usera
+    List<PlaybackHistoryDocument> findAllBySpotifyIdOrderByPlayedAtDesc(String spotifyId);
 }

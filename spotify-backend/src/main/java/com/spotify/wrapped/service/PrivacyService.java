@@ -56,20 +56,16 @@ public class PrivacyService {
 
     // @Transactional gwarantuje, że jeśli coś zepsuje się po drodze, zmiany w SQL zostaną cofnięte
     @Transactional
-    public void approveRequest(Long requestId) {
+    public long approveRequest(Long requestId) {
         DeletionRequestEntity request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("Nie znaleziono prośby."));
 
-        // 1. Zmieniamy status w Postgresie
         request.setStatus(RequestStatus.APPROVED);
         requestRepository.save(request);
 
-        // 2. Wyliczamy dokładny timestamp "odcięcia" (np. dzisiaj minus 7 dni)
         Instant cutoffDate = Instant.now().minus(request.getDaysToKeep(), ChronoUnit.DAYS);
-
-        // 3. Magia wielobazowości: Kasujemy dane z MongoDB!
-        playbackHistoryRepository.deleteBySpotifyIdAndPlayedAtBefore(request.getSpotifyId(), cutoffDate);
-        System.out.println("INFO: Zatwierdzono prośbę usunięcia dla usera: " + request.getSpotifyId());
+        // Zwracamy ilość skasowanych rekordów z bazy!
+        return playbackHistoryRepository.deleteBySpotifyIdAndPlayedAtBefore(request.getSpotifyId(), cutoffDate);
     }
 
     @Transactional

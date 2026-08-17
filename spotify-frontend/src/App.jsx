@@ -1,63 +1,25 @@
-import { useState } from 'react';
-import './App.css';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import LoginPage from './pages/LoginPage';
+import UserDashboard from './pages/UserDashboard';
+import UserHistory from './pages/UserHistory';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminUserDetail from './pages/AdminUserDetail';
+import AdminRequests from './pages/AdminRequests'; // NOWY PLIK
 
 function App() {
-  const [tracks, setTracks] = useState([]);
-  const [error, setError] = useState(null);
-
-  // Funkcja uderzająca do Spring Boota
-  const fetchTopTracks = async () => {
-    try {
-      const response = await fetch('http://localhost:8080/api/top-tracks', {
-        // To jest absolutnie wymagane, żeby przeglądarka dołączyła ciastko sesji ze Springa!
-        credentials: 'include'
-      });
-
-      if (response.status === 401 || response.status === 403) {
-        setError('Nie jesteś zalogowana! Kliknij "Zaloguj przez Spotify".');
-        return;
-      }
-
-      const data = await response.json();
-      setTracks(data);
-      setError(null);
-    } catch (err) {
-      setError('Wystąpił błąd komunikacji z serwerem Spring Boot.');
-    }
-  };
-
-  return (
-      <div style={{ textAlign: 'center', padding: '50px', fontFamily: 'sans-serif' }}>
-        <h1>Mój React Spotify Wrapped 🚀</h1>
-
-        {/* Krok 1: Przycisk logowania kieruje na nasz backend, który robi redirect do Spotify */}
-        <div style={{ marginBottom: '20px' }}>
-          <a
-              href="http://localhost:8080/oauth2/authorization/spotify"
-              style={{ padding: '10px 20px', background: '#1db954', color: 'black', textDecoration: 'none', borderRadius: '20px', fontWeight: 'bold', display: 'inline-block' }}
-          >
-            Zaloguj przez Spotify
-          </a>
-        </div>
-
-        {/* Krok 2: Pobieranie danych */}
-        <button onClick={fetchTopTracks} style={{ padding: '10px 20px', cursor: 'pointer' }}>
-          Pobierz moje Top Tracks z API
-        </button>
-
-        {/* Wyświetlanie błędu (np. gdy ktoś nie jest zalogowany) */}
-        {error && <p style={{ color: 'red', marginTop: '20px' }}>{error}</p>}
-
-        {/* Wyświetlanie listy utworów */}
-        <ul style={{ listStyle: 'none', padding: 0, marginTop: '30px' }}>
-          {tracks.map((track, index) => (
-              <li key={track.id || index} style={{ marginBottom: '10px', fontSize: '1.2rem' }}>
-                {index + 1}. <strong>{track.name}</strong> - {track.artists[0]?.name}
-              </li>
-          ))}
-        </ul>
-      </div>
-  );
+    return (
+        <Router>
+            <div style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#121212', color: 'white', minHeight: '100vh', padding: '20px', boxSizing: 'border-box' }}>
+                <Routes>
+                    <Route path="/" element={<LoginPage />} />
+                    <Route path="/user" element={<UserDashboard />} />
+                    <Route path="/user/history" element={<UserHistory />} />
+                    <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path="/admin/requests" element={<AdminRequests />} />
+                    <Route path="/admin/user/:spotifyId" element={<AdminUserDetail />} />
+                </Routes>
+            </div>
+        </Router>
+    );
 }
-
 export default App;
