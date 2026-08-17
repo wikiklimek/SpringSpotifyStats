@@ -3,25 +3,24 @@ server:
   address: 127.0.0.1
 
 spring:
-  # Konfiguracja PostgreSQL
   datasource:
-    url: jdbc:postgresql://localhost:5432/spotify_db
+    # Jeśli zmienna POSTGRES_HOST nie istnieje, użyj "localhost" (dla IntelliJ)
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/spotify_db
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update # W trybie deweloperskim: aktualizuje tabele bez kasowania danych
-    show-sql: true # Będzie pokazywać zapytania SQL w konsoli
+      ddl-auto: update
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
 
-  # Konfiguracja MongoDB
   data:
     mongodb:
-      # Wzorzec: mongodb://użytkownik:hasło@host:port/baza_danych?authSource=admin
-      uri: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@localhost:27017/spotify_db?authSource=admin
+      # Zmienna MONGO_HOST przełącza adres między Dockerem a IntelliJ
+      uri: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_HOST:localhost}:27017/spotify_db?authSource=admin
 
 
   security:

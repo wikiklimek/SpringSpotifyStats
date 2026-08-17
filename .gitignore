@@ -1,0 +1,18 @@
+/build/
+spotify-backend/pomocniczeInfo.ignore
+
+# Pliki środowiskowe z hasłami (bardzo ważne!)
+.env
+*.env
+
+# Konfiguracje środowiska IntelliJ
+.idea/
+*.iml
+
+# Java / Maven (Backend)
+spotify-backend/target/
+.mvn/
+
+# Node / React (Frontend)
+spotify-frontend/node_modules/
+spotify-frontend/dist/
