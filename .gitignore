@@ -1,5 +1,4 @@
 /build/
-spotify-backend/pomocniczeInfo.ignore
 
 # Pliki środowiskowe z hasłami (bardzo ważne!)
 .env
@@ -16,3 +15,7 @@ spotify-backend/target/
 # Node / React (Frontend)
 spotify-frontend/node_modules/
 spotify-frontend/dist/
+
+# moje pliki pomocnicze
+spotify-backend/*.ignore
+*.txt.ignore
