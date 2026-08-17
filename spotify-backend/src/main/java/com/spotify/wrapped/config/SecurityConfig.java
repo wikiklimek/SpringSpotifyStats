@@ -1,5 +1,8 @@
 package com.spotify.wrapped.config;
 
+import com.spotify.wrapped.security.CustomAccessTokenResponseClient;
+import com.spotify.wrapped.security.CustomAuthorizationRequestResolver;
+import com.spotify.wrapped.security.CustomOAuth2UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -10,6 +13,7 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import com.spotify.wrapped.security.CustomAuthorizationRequestRepository;
 
 import java.util.List;
 
@@ -17,14 +21,29 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    // Wstrzykujemy nasze własne klocki przez konstruktor!
+    private final CustomAuthorizationRequestResolver customAuthorizationResolver;
+    private final CustomAccessTokenResponseClient customTokenClient;
+    private final CustomOAuth2UserService customUserService;
+    private final CustomAuthorizationRequestRepository customRequestRepository; // NOWE
+
+    // Wstrzykujemy nasz nowy schowek
+    public SecurityConfig(CustomAuthorizationRequestResolver customAuthorizationResolver,
+                          CustomAccessTokenResponseClient customTokenClient,
+                          CustomOAuth2UserService customUserService,
+                          CustomAuthorizationRequestRepository customRequestRepository) { // NOWE
+        this.customAuthorizationResolver = customAuthorizationResolver;
+        this.customTokenClient = customTokenClient;
+        this.customUserService = customUserService;
+        this.customRequestRepository = customRequestRepository; // NOWE
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
 
-                // NOWOCZESNE ROZWIĄZANIE (Zamiast przestarzałego AntPathRequestMatcher):
-                // Jeśli zapytanie idzie na /api/ i nie ma sesji, zwróć czysty błąd 401 Unauthorized
                 .exceptionHandling(exceptions -> exceptions
                         .defaultAuthenticationEntryPointFor(
                                 new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
@@ -37,9 +56,22 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**", "/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
+
+                // Używamy naszych wstrzykniętych klocków z pakietu security
                 .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(authEndpoint -> authEndpoint
+                                .authorizationRequestResolver(customAuthorizationResolver)
+                                .authorizationRequestRepository(customRequestRepository)
+                        )
+                        .tokenEndpoint(tokenEndpoint -> tokenEndpoint
+                                .accessTokenResponseClient(customTokenClient)
+                        )
+                        .userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint
+                                .userService(customUserService)
+                        )
                         .defaultSuccessUrl("http://127.0.0.1:5173/user", true)
                 )
+
                 .formLogin(form -> form
                         .defaultSuccessUrl("http://127.0.0.1:5173/admin", true)
                         .permitAll()
@@ -59,7 +91,6 @@ public class SecurityConfig {
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
-
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

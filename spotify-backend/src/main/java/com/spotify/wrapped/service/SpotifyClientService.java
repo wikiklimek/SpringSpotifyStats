@@ -15,6 +15,21 @@ public class SpotifyClientService {
     public SpotifyClientService() {
         this.restClient = RestClient.builder()
                 .baseUrl("https://api.spotify.com/v1")
+                // TUTAJ ZAKŁADAMY PODSŁUCHIWACZA NA WSZYSTKIE ZAPYTANIA REST!
+                .requestInterceptor((request, body, execution) -> {
+                    System.out.println("--> [API SPOTIFY WYCHODZĄCE]: Żądanie " + request.getMethod() + " na adres: " + request.getURI());
+
+                    // Zmierzmy też ile czasu to zajmuje!
+                    long startTime = System.currentTimeMillis();
+
+                    // Tutaj żądanie fizycznie leci do serwerów Spotify (execution.execute)
+                    var response = execution.execute(request, body);
+
+                    long duration = System.currentTimeMillis() - startTime;
+                    System.out.println("<-- [API SPOTIFY PRZYCHODZĄCE]: Otrzymano kod " + response.getStatusCode() + " w czasie " + duration + "ms");
+
+                    return response;
+                })
                 .build();
     }
 
@@ -44,9 +59,6 @@ public class SpotifyClientService {
         return response != null ? response.items() : List.of();
     }
 
-    // NAPRAWIONE NAZWY PONIŻEJ:
-
-    // 4. Pobieranie tego, co aktualnie gra (Currently Playing)
     public CurrentlyPlayingResponse getCurrentlyPlaying(String token) {
         return restClient.get()
                 .uri("/me/player/currently-playing")
@@ -55,7 +67,6 @@ public class SpotifyClientService {
                 .body(CurrentlyPlayingResponse.class);
     }
 
-    // 5. Pobieranie ostatnio odtwarzanych (Recently Played - max 50 sztuk)
     public List<PlayHistoryItem> getRecentlyPlayed(String accessToken) {
         RecentlyPlayedResponse response = restClient.get()
                 .uri("/me/player/recently-played?limit=50")

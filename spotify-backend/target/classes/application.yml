@@ -23,10 +23,7 @@ spring:
       # Wzorzec: mongodb://użytkownik:hasło@host:port/baza_danych?authSource=admin
       uri: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@localhost:27017/spotify_db?authSource=admin
 
-  # Tu prawdopodobnie masz już swoją konfigurację security (OAuth2)
-  # security:
-  #   oauth2:
-  # ...
+
   security:
     oauth2:
       client:
