@@ -9,6 +9,6 @@ public record Artist(
         int popularity,
         List<String> genres,
         Followers followers,
-        List<Image> images, // To implementuje część interfejsu
-        @JsonProperty("external_urls") ExternalUrls externalUrls // To implementuje resztę
+        List<Image> images,
+        @JsonProperty("external_urls") ExternalUrls externalUrls
 ) implements SpotifyItem {}

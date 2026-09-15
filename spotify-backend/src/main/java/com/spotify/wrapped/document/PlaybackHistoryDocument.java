@@ -8,16 +8,16 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.Instant;
 
 @Document(collection = "playback_history")
-// Ten indeks mocno przyspieszy sprawdzanie duplikatów i zapytań o konkretnego usera
+// fast duplicates check and user check
 @CompoundIndex(name = "spotifyId_playedAt_idx", def = "{'spotifyId': 1, 'playedAt': -1}")
 public class PlaybackHistoryDocument {
 
     @Id
     private String id;
 
-    private String spotifyId; // Wiążemy odtworzenie z użytkownikiem
-    private Instant playedAt; // Dokładny moment odtworzenia utworu
-    private Track track; // Zapisujemy pełne dane piosenki jako zagnieżdżony JSON
+    private String spotifyId;
+    private Instant playedAt;
+    private Track track;
 
     public PlaybackHistoryDocument() {}
 
@@ -27,7 +27,6 @@ public class PlaybackHistoryDocument {
         this.track = track;
     }
 
-    // --- Gettery i Settery ---
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getSpotifyId() { return spotifyId; }

@@ -14,28 +14,28 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import com.spotify.wrapped.security.CustomAuthorizationRequestRepository;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-
-    // Wstrzykujemy nasze własne klocki przez konstruktor!
+    // DI
     private final CustomAuthorizationRequestResolver customAuthorizationResolver;
     private final CustomAccessTokenResponseClient customTokenClient;
     private final CustomOAuth2UserService customUserService;
-    private final CustomAuthorizationRequestRepository customRequestRepository; // NOWE
+    private final CustomAuthorizationRequestRepository customRequestRepository;
 
-    // Wstrzykujemy nasz nowy schowek
     public SecurityConfig(CustomAuthorizationRequestResolver customAuthorizationResolver,
                           CustomAccessTokenResponseClient customTokenClient,
                           CustomOAuth2UserService customUserService,
-                          CustomAuthorizationRequestRepository customRequestRepository) { // NOWE
+                          CustomAuthorizationRequestRepository customRequestRepository) {
         this.customAuthorizationResolver = customAuthorizationResolver;
         this.customTokenClient = customTokenClient;
         this.customUserService = customUserService;
-        this.customRequestRepository = customRequestRepository; // NOWE
+        this.customRequestRepository = customRequestRepository;
     }
 
     @Bean
@@ -57,7 +57,6 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                // Używamy naszych wstrzykniętych klocków z pakietu security
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(authEndpoint -> authEndpoint
                                 .authorizationRequestResolver(customAuthorizationResolver)
@@ -94,5 +93,10 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }

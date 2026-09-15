@@ -12,9 +12,10 @@ public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRe
 
     private final DefaultOAuth2AuthorizationRequestResolver defaultResolver;
 
-    // Konstruktor - Spring automatycznie wstrzyknie tu ClientRegistrationRepository
+
     public CustomAuthorizationRequestResolver(ClientRegistrationRepository repo) {
-        this.defaultResolver = new DefaultOAuth2AuthorizationRequestResolver(repo, "/oauth2/authorization");
+        this.defaultResolver = new DefaultOAuth2AuthorizationRequestResolver(
+                repo, "/oauth2/authorization");
     }
 
     @Override

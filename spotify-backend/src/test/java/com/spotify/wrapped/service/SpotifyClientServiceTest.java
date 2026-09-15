@@ -17,7 +17,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class SpotifyClientServiceTest {
 
-    // Tworzymy osobne mocki dla każdego ogniwa w łańcuszku RestClienta!
     @Mock private RestClient restClient;
     @Mock private RestClient.RequestHeadersUriSpec requestHeadersUriSpec;
     @Mock private RestClient.RequestHeadersSpec requestHeadersSpec;
@@ -32,7 +31,7 @@ class SpotifyClientServiceTest {
 
         UserProfile mockProfile = new UserProfile("123", "Wika", "w@test.com", "PL", null, null, null, "premium");
 
-        // Ręcznie spinamy łańcuszek: get() -> uri() -> header() -> retrieve() -> body()
+        // we mock the whole procedure by hand: get() -> uri() -> header() -> retrieve() -> body()
         when(restClient.get()).thenReturn(requestHeadersUriSpec);
         when(requestHeadersUriSpec.uri("/me")).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.header(eq("Authorization"), anyString())).thenReturn(requestHeadersSpec);

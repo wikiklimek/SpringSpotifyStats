@@ -11,21 +11,19 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 1. Łapiemy błąd wygasłego tokena Spotify!
     @ExceptionHandler(ClientAuthorizationRequiredException.class)
     public ResponseEntity<?> handleSpotifyTokenExpired(ClientAuthorizationRequiredException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("error", "musisz się zalogować ponownie"));
     }
 
-    // 2. Łapiemy błędy logiki biznesowej (np. złe parametry)
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<?> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", ex.getMessage()));
     }
 
-    // 3. Fallback: Wszystkie inne błędy (np. błąd bazy danych)
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleAllExceptions(Exception ex) {
         ex.printStackTrace();

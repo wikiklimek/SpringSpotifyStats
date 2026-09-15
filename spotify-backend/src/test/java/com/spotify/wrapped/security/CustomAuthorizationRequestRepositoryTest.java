@@ -13,21 +13,20 @@ class CustomAuthorizationRequestRepositoryTest {
 
     @Test
     void shouldSaveAuthorizationRequestAndMaskTokenWithoutCrashing() {
-        // GIVEN: Wirtualne żądanie od przeglądarki ze sfabrykowanym "złośliwym" tokenem state
+
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         OAuth2AuthorizationRequest authRequest = OAuth2AuthorizationRequest.authorizationCode()
                 .clientId("test-client")
                 .authorizationUri("https://spotify.com")
-                .state("KROTKI") // Ekstremalnie krótki token, by przetestować granice metody maskToken
+                .state("KROTKI")
                 .build();
 
-        // WHEN: Zapisujemy żądanie (to wywoła pod maską naszą metodę z "System.out.println")
+        // WHEN:
         repository.saveAuthorizationRequest(authRequest, request, response);
 
-        // THEN: Metoda nie powinna rzucić żadnego błędu NullPointerException czy IndexOutOfBounds,
-        // a żądanie powinno zostać poprawnie zapisane w sesji serwera.
+        // THEN:
         assertNotNull(request.getSession());
     }
 }

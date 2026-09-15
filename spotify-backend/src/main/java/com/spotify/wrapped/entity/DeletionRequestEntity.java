@@ -12,28 +12,27 @@ public class DeletionRequestEntity {
     private Long id;
 
     @Column(nullable = false)
-    private String spotifyId; // Kto prosi o usunięcie
+    private String spotifyId;
 
     @Column(nullable = false)
-    private int daysToKeep; // Ile dni chce zostawić (np. 7, 30, 90)
+    private int daysToKeep;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private RequestStatus status; // Nasz nowy Enum (zapisze się w bazie jako tekst)
+    private RequestStatus status;
 
     @Column(nullable = false)
-    private LocalDateTime requestDate; // Kiedy złożono prośbę
+    private LocalDateTime requestDate;
 
     public DeletionRequestEntity() {}
 
     public DeletionRequestEntity(String spotifyId, int daysToKeep) {
         this.spotifyId = spotifyId;
         this.daysToKeep = daysToKeep;
-        this.status = RequestStatus.PENDING; // Domyślnie nowa prośba czeka na akceptację
+        this.status = RequestStatus.PENDING; // by default
         this.requestDate = LocalDateTime.now();
     }
 
-    // --- Gettery i Settery ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getSpotifyId() { return spotifyId; }

@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # 1. Baza Relacyjna (Podpinamy Twoją starą!)
   postgres-db:
     image: postgres:16
     container_name: spotify_postgres
@@ -11,11 +10,10 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: spotify_db
     ports:
-      - "127.0.0.1:5432:5432" # Zabezpieczone przed Wi-Fi
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  # 2. Baza Nierelacyjna (Podpinamy Twoją starą!)
   mongo-db:
     image: mongo:7.0
     container_name: spotify_mongo
@@ -24,49 +22,47 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
     ports:
-      - "127.0.0.1:27017:27017" # Zabezpieczone przed Wi-Fi
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongo_data:/data/db
 
-  # 3. Mózg - Twój Backend w Spring Boot
   backend:
     build:
       context: ./spotify-backend
     container_name: spotify_backend
     restart: always
     environment:
-      POSTGRES_HOST: postgres-db # Spring szuka bazy w kontenerze postgres-db
-      MONGO_HOST: mongo-db       # Spring szuka bazy w kontenerze mongo-db
+      POSTGRES_HOST: postgres-db
+      MONGO_HOST: mongo-db
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       MONGO_USER: ${MONGO_USER}
       MONGO_PASSWORD: ${MONGO_PASSWORD}
       SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID}
       SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET}
+      ADMIN_DEFAULT_USERNAME: ${ADMIN_DEFAULT_USERNAME}
+      ADMIN_DEFAULT_PASSWORD: ${ADMIN_DEFAULT_PASSWORD}
     ports:
       - "127.0.0.1:8080:8080"
     depends_on:
       - postgres-db
       - mongo-db
 
-  # 4. Wygląd - Twój Frontend w React
   frontend:
     build:
       context: ./spotify-frontend
     container_name: spotify_frontend
     restart: always
     ports:
-      - "127.0.0.1:5173:80" # Podpinamy pod Twój ulubiony port 5173
+      - "127.0.0.1:5173:80"
     depends_on:
       - backend
 
-# --- SEKCJA RATOWANIA DANYCH ---
+
 volumes:
   postgres_data:
-    # Mówimy Dockerowi: "Nie rób nowego dysku, użyj tego, który zrobiłam wcześniej!"
     name: javaspotify_postgres_data
     external: true
   mongo_data:
-    # Mówimy Dockerowi: "Nie rób nowego dysku, użyj tego z MongoDB!"
     name: javaspotify_mongo_data
     external: true

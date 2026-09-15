@@ -55,11 +55,13 @@ public class SpotifyController {
         this.playbackHistoryRepository = playbackHistoryRepository;
     }
 
-    // Bezpieczna metoda wyciągająca ID Spotify bezpośrednio z pamięci RAM serwera
-    // Bezpieczne pobieranie ID z sesji RAM
+    // spotify ID from RAm
     private String getSafeSpotifyIdFromSession() {
-        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof org.springframework.security.oauth2.core.user.OAuth2User oauth2User) {
+        org.springframework.security.core.Authentication auth =
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth != null &&
+                auth.getPrincipal() instanceof org.springframework.security.oauth2.core.user.OAuth2User oauth2User) {
             return oauth2User.getAttribute("id");
         }
         throw new IllegalArgumentException("Brak sesji użytkownika");
@@ -81,7 +83,7 @@ public class SpotifyController {
         return spotifyId;
     }
 
-    // PONIŻSZE ENDPOINTY GADAJĄ ZE SPOTIFY (Wymagają tokenu)
+
     @GetMapping("/api/top-tracks")
     public List<Track> getTopTracks(@RegisteredOAuth2AuthorizedClient("spotify") OAuth2AuthorizedClient authorizedClient) {
         String token = authorizedClient.getAccessToken().getTokenValue();
@@ -111,7 +113,7 @@ public class SpotifyController {
     @GetMapping("/api/top-genres")
     public Map<String, Long> getTopGenres(@RegisteredOAuth2AuthorizedClient("spotify") OAuth2AuthorizedClient authorizedClient) {
         List<Artist> topArtists = getTopArtists(authorizedClient);
-        return statsService.calculateTopGenres(topArtists, 5);
+        return statsService.calculateTopGenres(topArtists, 10);
     }
 
     @GetMapping("/api/currently-playing")
@@ -132,30 +134,28 @@ public class SpotifyController {
         return Map.of("message", "Zsynchronizowano pomyślnie. Nowe utwory: " + added);
     }
 
-    // PONIŻSZE ENDPOINTY GADAJĄ TYLKO Z BAZĄ DANYCH (Nie potrzebują tokenu Spotify!)
-    // ======= ENDPOINTY BAZY DANYCH (BEZ TOKENA SPOTIFY) =======
 
     @PostMapping("/api/privacy/request-deletion")
     public Map<String, String> requestDeletion(@RequestParam(defaultValue = "7") int days) {
-        String spotifyId = getSafeSpotifyIdFromSession(); // TYLKO z sesji!
+        String spotifyId = getSafeSpotifyIdFromSession();
         return Map.of("message", privacyService.createDeletionRequest(spotifyId, days));
     }
 
     @PostMapping("/api/privacy/withdraw")
     public Map<String, String> withdrawDeletionRequest() {
-        String spotifyId = getSafeSpotifyIdFromSession(); // TYLKO z sesji!
+        String spotifyId = getSafeSpotifyIdFromSession();
         return Map.of("message", privacyService.withdrawRequest(spotifyId));
     }
 
     @GetMapping("/api/history")
     public List<PlaybackHistoryDocument> getHistory() {
-        String spotifyId = getSafeSpotifyIdFromSession(); // TYLKO z sesji!
+        String spotifyId = getSafeSpotifyIdFromSession();
         return playbackHistoryRepository.findAllBySpotifyIdOrderByPlayedAtDesc(spotifyId);
     }
 
     @GetMapping("/api/privacy/status")
     public DeletionRequestEntity getPrivacyStatus() {
-        String spotifyId = getSafeSpotifyIdFromSession(); // TYLKO z sesji!
+        String spotifyId = getSafeSpotifyIdFromSession();
         return privacyService.getPendingRequests().stream()
                 .filter(req -> req.getSpotifyId().equals(spotifyId))
                 .findFirst()

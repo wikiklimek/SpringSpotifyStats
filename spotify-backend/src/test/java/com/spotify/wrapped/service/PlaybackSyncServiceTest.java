@@ -39,10 +39,8 @@ class PlaybackSyncServiceTest {
         PlayHistoryItem item1 = new PlayHistoryItem(track1, Instant.parse("2026-08-17T10:00:00Z"));
         PlayHistoryItem item2 = new PlayHistoryItem(track2, Instant.parse("2026-08-17T11:00:00Z"));
 
-        // Udajemy, że Spotify zwraca 2 utwory
         when(spotifyClientService.getRecentlyPlayed(token)).thenReturn(List.of(item1, item2));
 
-        // Udajemy, że pierwszy utwór JUŻ JEST w bazie, a drugi jest NOWY
         when(playbackHistoryRepository.existsBySpotifyIdAndPlayedAt(spotifyId, item1.playedAt())).thenReturn(true);
         when(playbackHistoryRepository.existsBySpotifyIdAndPlayedAt(spotifyId, item2.playedAt())).thenReturn(false);
 

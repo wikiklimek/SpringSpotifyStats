@@ -53,7 +53,6 @@ public class AdminController {
         privacyService.rejectRequest(id);
     }
 
-    // LISTA UŻYTKOWNIKÓW Z LICZBĄ DOKUMENTÓW
     @GetMapping("/users")
     public List<Map<String, Object>> getAllUsers() {
         return userRepository.findAll().stream().map(user -> {
@@ -68,7 +67,6 @@ public class AdminController {
         }).collect(Collectors.toList());
     }
 
-    // SZCZEGÓŁY UŻYTKOWNIKA (DOKUMENTY ARTISTS/TRACKS)
     @GetMapping("/users/{spotifyId}/docs")
     public Map<String, Object> getUserDocs(@PathVariable String spotifyId) {
         List<DailyTopTracksDocument> tracks = tracksRepo.findAllBySpotifyId(spotifyId);
@@ -76,7 +74,6 @@ public class AdminController {
         return Map.of("tracks", tracks, "artists", artists);
     }
 
-    // BEZPOŚREDNIE USUWANIE DANYCH (GLOBALNE LUB DLA USERA)
     @DeleteMapping("/records")
     public Map<String, Long> deleteRecords(@RequestParam int days, @RequestParam(required = false) String spotifyId) {
         LocalDate cutoffDate = LocalDate.now().minusDays(days);
@@ -88,7 +85,9 @@ public class AdminController {
             deletedTracks = tracksRepo.deleteBySpotifyIdAndDateBefore(spotifyId, cutoffDate);
             deletedArtists = artistsRepo.deleteBySpotifyIdAndDateBefore(spotifyId, cutoffDate);
             //deletedHistory = historyRepo.deleteBySpotifyIdAndPlayedAtBefore(spotifyId, cutoffInstant);
-        } else {
+        }
+        else
+        {
             deletedTracks = tracksRepo.deleteByDateBefore(cutoffDate);
             deletedArtists = artistsRepo.deleteByDateBefore(cutoffDate);
             //deletedHistory = historyRepo.deleteByPlayedAtBefore(cutoffInstant);

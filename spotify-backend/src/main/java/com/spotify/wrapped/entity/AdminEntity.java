@@ -16,7 +16,7 @@ public class AdminEntity {
     @Column(nullable = false)
     private String password;
 
-    private String role; // Zawsze będzie to np. "ROLE_ADMIN"
+    private String role;
 
     public AdminEntity() {}
 
@@ -26,7 +26,6 @@ public class AdminEntity {
         this.role = role;
     }
 
-    // --- Gettery i Settery ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getUsername() { return username; }

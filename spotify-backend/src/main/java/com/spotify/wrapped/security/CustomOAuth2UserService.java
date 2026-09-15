@@ -17,7 +17,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         System.out.println("\n=== [OAUTH2 ETAP 3] ===");
         System.out.println("LOG: Otwieram API Spotify, aby sprawdzić tożsamość użytkownika...");
 
-        // Pobranie danych ze Spotify
+        // data dwonloading feom spotify
         OAuth2User user = delegate.loadUser(userRequest);
 
         System.out.println("  -> SUKCES! Profil pobrany pomyślnie.");

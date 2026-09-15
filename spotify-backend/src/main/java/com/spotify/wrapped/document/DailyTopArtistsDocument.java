@@ -18,7 +18,7 @@ public class DailyTopArtistsDocument {
     public DailyTopArtistsDocument(String spotifyId, LocalDate date, List<Artist> topArtists) {
         this.spotifyId = spotifyId; this.date = date; this.topArtists = topArtists;
     }
-    // Wygeneruj Gettery i Settery (Alt+Insert)
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getSpotifyId() { return spotifyId; }

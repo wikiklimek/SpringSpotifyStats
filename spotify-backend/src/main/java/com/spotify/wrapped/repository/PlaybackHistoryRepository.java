@@ -11,10 +11,8 @@ import java.util.List;
 public interface PlaybackHistoryRepository extends MongoRepository<PlaybackHistoryDocument, String> {
     boolean existsBySpotifyIdAndPlayedAt(String spotifyId, Instant playedAt);
 
-    // Zmieniamy void na long, aby wiedzieć ile usunięto
     long deleteBySpotifyIdAndPlayedAtBefore(String spotifyId, Instant dateBefore);
     long deleteByPlayedAtBefore(Instant dateBefore);
 
-    // Do wyświetlania historii usera
     List<PlaybackHistoryDocument> findAllBySpotifyIdOrderByPlayedAtDesc(String spotifyId);
 }

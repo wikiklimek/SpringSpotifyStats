@@ -22,16 +22,13 @@ public class PrivacyService {
         this.playbackHistoryRepository = playbackHistoryRepository;
     }
 
-    // --- METODY DLA UŻYTKOWNIKA ---
 
     public String createDeletionRequest(String spotifyId, int daysToKeep) {
-        // Sprawdzamy, czy użytkownik nie ma już aktywnej prośby
-        boolean hasPending = requestRepository.findBySpotifyIdAndStatus(spotifyId, RequestStatus.PENDING).isPresent();
-        if (hasPending) {
+
+        if (requestRepository.findBySpotifyIdAndStatus(spotifyId, RequestStatus.PENDING).isPresent()) {
             return "Masz już oczekującą prośbę. Poczekaj na decyzję administratora lub ją wycofaj.";
         }
 
-        // Zapisujemy nową prośbę w PostgreSQL
         DeletionRequestEntity newRequest = new DeletionRequestEntity(spotifyId, daysToKeep);
         requestRepository.save(newRequest);
         return "Prośba o usunięcie danych starszych niż " + daysToKeep + " dni została wysłana.";
@@ -41,20 +38,19 @@ public class PrivacyService {
         var pendingReq = requestRepository.findBySpotifyIdAndStatus(spotifyId, RequestStatus.PENDING);
         if (pendingReq.isPresent()) {
             DeletionRequestEntity request = pendingReq.get();
-            request.setStatus(RequestStatus.WITHDRAWN); // Zmieniamy status
-            requestRepository.save(request); // Aktualizujemy w bazie SQL
+            request.setStatus(RequestStatus.WITHDRAWN); //no detele, just withdraw
+            requestRepository.save(request);
             return "Prośba została wycofana. Administrator jej nie zobaczy.";
         }
         return "Brak oczekującej prośby do wycofania.";
     }
 
-    // --- METODY DLA ADMINISTRATORA ---
 
     public List<DeletionRequestEntity> getPendingRequests() {
         return requestRepository.findAllByStatusOrderByRequestDateAsc(RequestStatus.PENDING);
     }
 
-    // @Transactional gwarantuje, że jeśli coś zepsuje się po drodze, zmiany w SQL zostaną cofnięte
+    //TRANSACTIONAL!!! no mess in sql
     @Transactional
     public long approveRequest(Long requestId) {
         DeletionRequestEntity request = requestRepository.findById(requestId)
@@ -64,7 +60,7 @@ public class PrivacyService {
         requestRepository.save(request);
 
         Instant cutoffDate = Instant.now().minus(request.getDaysToKeep(), ChronoUnit.DAYS);
-        // Zwracamy ilość skasowanych rekordów z bazy!
+
         return playbackHistoryRepository.deleteBySpotifyIdAndPlayedAtBefore(request.getSpotifyId(), cutoffDate);
     }
 

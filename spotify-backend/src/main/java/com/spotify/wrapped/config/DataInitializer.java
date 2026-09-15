@@ -2,38 +2,43 @@ package com.spotify.wrapped.config;
 
 import com.spotify.wrapped.entity.AdminEntity;
 import com.spotify.wrapped.repository.AdminRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
 
     private final AdminRepository adminRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public DataInitializer(AdminRepository adminRepository) {
+    @Value("${app.admin.default-username}")
+    private String defaultUsername;
+
+    @Value("${app.admin.default-password}")
+    private String defaultPassword;
+
+    public DataInitializer(AdminRepository adminRepository, PasswordEncoder passwordEncoder) {
         this.adminRepository = adminRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
-    public void run(String... args) throws Exception {
-        // Sprawdzamy, czy w bazie istnieje już użytkownik o loginie "admin"
-        if (adminRepository.findByUsername("admin").isEmpty()) {
+    public void run(String... args) {
+        if (adminRepository.findByUsername(defaultUsername).isEmpty()) {
+            System.out.println("INFO: Brak konta Administratora. Tworzenie bezpiecznego konta...");
 
-            System.out.println("INFO: Brak konta Administratora. Tworzenie domyślnego konta...");
-
-            // UWAGA: Znacznik {noop} jest tu celowy!
-            // Spring Security domyślnie wymaga, aby wszystkie hasła były zaszyfrowane (np. BCrypt).
-            // Używając prefiksu {noop}, mówimy Springowi: "Na razie to jest czysty tekst, nie szyfruj tego".
-            // Kiedy podepniemy pełne Security, zmienimy to na prawdziwy szyfr.
+            String hashedPassword = passwordEncoder.encode(defaultPassword);
 
             AdminEntity admin = new AdminEntity(
-                    "admin",
-                    "{noop}admin123",
+                    defaultUsername,
+                    hashedPassword,
                     "ROLE_ADMIN"
             );
 
             adminRepository.save(admin);
-            System.out.println("INFO: Utworzono konto Administratora (Login: admin, Hasło: admin123)");
+            System.out.println("INFO: Utworzono konto Administratora (Login: " + defaultUsername + ", Hasło: [ZASZYFROWANE BCRYPT])");
         }
     }
 }

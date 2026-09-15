@@ -4,7 +4,6 @@ spring:
       ddl-auto: create-drop
     show-sql: false
 
-  # fake OAuth2, for Spring Security context to get up in tests
   security:
     oauth2:
       client:
@@ -14,9 +13,16 @@ spring:
             client-secret: dummy-test-secret
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - user-read-email
+              - user-top-read
         provider:
           spotify:
             authorization-uri: https://accounts.spotify.com/authorize
             token-uri: https://accounts.spotify.com/api/token
             user-info-uri: https://api.spotify.com/v1/me
-            user-name-attribute: id
+
+app:
+  admin:
+    default-username: ${ADMIN_DEFAULT_USERNAME:admin}
+    default-password: ${ADMIN_DEFAULT_PASSWORD:admin123}

@@ -16,10 +16,10 @@ public class CustomAccessTokenResponseClient implements OAuth2AccessTokenRespons
         System.out.println("\n=== [OAUTH2 ETAP 2] ===");
         System.out.println("LOG: Wysyłam jednorazowy kod z powrotem do Spotify w zamian za Access Token...");
 
-        // Wykonanie ukrytego zapytania
+        // request to spotify
         OAuth2AccessTokenResponse response = defaultClient.getTokenResponse(request);
 
-        System.out.println("  -> SUKCES! Serwer zdobył token (nie wyświetlam go ze względów bezpieczeństwa).");
+        System.out.println("  -> SUKCES! Serwer zdobył token");
         System.out.println("  -> Typ tokenu: " + response.getAccessToken().getTokenType().getValue());
         System.out.println("  -> Przyznane zgody: " + response.getAccessToken().getScopes());
         System.out.println("  -> Token wygaśnie: " + response.getAccessToken().getExpiresAt());

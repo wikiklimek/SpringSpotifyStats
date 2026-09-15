@@ -53,7 +53,7 @@ class SpotifyStatsServiceTest {
         // GIVEN
         Artist artist1 = new Artist("1", "1", 0, List.of("rock", "metal", "pop", "jazz"), null, null, null);
 
-        // WHEN (Chcemy tylko TOP 2 gatunki)
+        // WHEN
         Map<String, Long> topGenres = statsService.calculateTopGenres(List.of(artist1), 2);
 
         // THEN

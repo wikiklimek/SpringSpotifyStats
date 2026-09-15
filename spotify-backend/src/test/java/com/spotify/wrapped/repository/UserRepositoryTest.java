@@ -21,7 +21,7 @@ class UserRepositoryTest {
 
     @Test
     void shouldSaveAndFindUserBySpotifyId() {
-        // GIVEN: Unikalne ID tylko dla tego testu
+        // GIVEN:
         UserEntity user = new UserEntity("test_jpa_999", "Wiktoria", "test@test.com", LocalDate.now());
         userRepository.save(user);
 

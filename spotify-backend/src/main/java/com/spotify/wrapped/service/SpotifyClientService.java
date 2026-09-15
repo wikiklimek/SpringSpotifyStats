@@ -15,19 +15,16 @@ public class SpotifyClientService {
     public SpotifyClientService() {
         this.restClient = RestClient.builder()
                 .baseUrl("https://api.spotify.com/v1")
-                // TUTAJ ZAKŁADAMY PODSŁUCHIWACZA NA WSZYSTKIE ZAPYTANIA REST!
+                // listener
                 .requestInterceptor((request, body, execution) -> {
-                    System.out.println("--> [API SPOTIFY WYCHODZĄCE]: Żądanie " + request.getMethod() + " na adres: " + request.getURI());
-
-                    // Zmierzmy też ile czasu to zajmuje!
+                    System.out.println("--> [API SPOTIFY OUT]: Request "
+                            + request.getMethod() + " to address: " + request.getURI());
                     long startTime = System.currentTimeMillis();
-
-                    // Tutaj żądanie fizycznie leci do serwerów Spotify (execution.execute)
+                    //in spotify servers
                     var response = execution.execute(request, body);
-
                     long duration = System.currentTimeMillis() - startTime;
-                    System.out.println("<-- [API SPOTIFY PRZYCHODZĄCE]: Otrzymano kod " + response.getStatusCode() + " w czasie " + duration + "ms");
-
+                    System.out.println("<-- [API SPOTIFY IN]: code "
+                            + response.getStatusCode() + " in " + duration + "ms");
                     return response;
                 })
                 .build();

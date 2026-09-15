@@ -9,6 +9,5 @@ import java.util.Optional;
 @Repository
 public interface AdminRepository extends JpaRepository<AdminEntity, Long> {
 
-    // Ta metoda przyda nam się za chwilę do logowania Spring Security
     Optional<AdminEntity> findByUsername(String username);
 }

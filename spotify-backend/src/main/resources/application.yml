@@ -2,6 +2,11 @@ server:
   port: 8080
   # address: 127.0.0.1
 
+app:
+  admin:
+    default-username: ${ADMIN_DEFAULT_USERNAME:admin}
+    default-password: ${ADMIN_DEFAULT_PASSWORD:admin123}
+
 spring:
   datasource:
     # if POSTGRES_HOST not exists, use "localhost" (in IntelliJ)

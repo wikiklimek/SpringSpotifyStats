@@ -9,7 +9,6 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
-    // Wystarczy, że napiszesz nazwę metody zgodnie z konwencją,
-    // a Spring sam wygeneruje dla niej kod SQL (SELECT * FROM users WHERE spotify_id = ?) !!!
+    // (SELECT * FROM users WHERE spotify_id = spotifyId)
     Optional<UserEntity> findBySpotifyId(String spotifyId);
 }

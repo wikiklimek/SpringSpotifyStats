@@ -12,7 +12,6 @@ public class CustomAuthorizationRequestRepository implements AuthorizationReques
 
     private final HttpSessionOAuth2AuthorizationRequestRepository delegate = new HttpSessionOAuth2AuthorizationRequestRepository();
 
-    // --- METODA MASKUJĄCA ZGODNIE Z TWOIM POMYSŁEM ---
     private String maskToken(String token) {
         if (token == null || token.length() <= 6) {
             return "***";

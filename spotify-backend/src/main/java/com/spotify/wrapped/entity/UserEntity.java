@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "users") //tak bedzie sie nazywac tabela w bazie
+@Table(name = "users")
 public class UserEntity {
 
     @Id
@@ -20,10 +20,9 @@ public class UserEntity {
     @Column(name = "last_login_date")
     private LocalDate lastLoginDate;
 
-    // Pusty konstruktor wymagany przez Hibernate
     public UserEntity() {}
 
-    // Konstruktor do wygodnego tworzenia
+
     public UserEntity(String spotifyId, String displayName, String email, LocalDate lastLoginDate) {
         this.spotifyId = spotifyId;
         this.displayName = displayName;
@@ -31,7 +30,6 @@ public class UserEntity {
         this.lastLoginDate = lastLoginDate;
     }
 
-    // Gettery i Settery
     public Long getId() {
         return id;
     }
