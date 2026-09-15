@@ -4,12 +4,12 @@ import UserDashboard from './pages/UserDashboard';
 import UserHistory from './pages/UserHistory';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminUserDetail from './pages/AdminUserDetail';
-import AdminRequests from './pages/AdminRequests'; // NOWY PLIK
+import AdminRequests from './pages/AdminRequests';
 
-function App() {
+export default function App() {
     return (
         <Router>
-            <div style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#121212', color: 'white', minHeight: '100vh', padding: '20px', boxSizing: 'border-box' }}>
+            <div className="min-h-screen bg-spotify-black text-white p-5 font-['Poppins',sans-serif] box-border selection:bg-spotify-green selection:text-black">
                 <Routes>
                     <Route path="/" element={<LoginPage />} />
                     <Route path="/user" element={<UserDashboard />} />
@@ -22,4 +22,3 @@ function App() {
         </Router>
     );
 }
-export default App;

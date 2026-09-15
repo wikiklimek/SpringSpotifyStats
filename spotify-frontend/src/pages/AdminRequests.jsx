@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { callApi } from '../utils/api';
+import { ArrowLeft, Check, X, ShieldAlert } from 'lucide-react';
 
 export default function AdminRequests() {
     const [pendingRequests, setPendingRequests] = useState([]);
@@ -19,7 +20,6 @@ export default function AdminRequests() {
     useEffect(() => { loadRequests(); }, [navigate]);
 
     const handleAction = async (id, action) => {
-        // Okienka decyzyjne (Pop-upy)
         if (action === 'approve') {
             const isConfirmed = window.confirm("Czy na pewno chcesz ZATWIERDZIĆ prośbę i USUNĄĆ te dane z bazy?");
             if (!isConfirmed) return;
@@ -37,7 +37,6 @@ export default function AdminRequests() {
                 } else {
                     window.alert("Prośba odrzucona.");
                 }
-                // Aktualizujemy listę
                 setPendingRequests(pendingRequests.filter(req => req.id !== id));
             }
         } catch (e) {
@@ -46,37 +45,53 @@ export default function AdminRequests() {
     };
 
     return (
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#181818', padding: '20px', borderRadius: '12px', marginBottom: '30px' }}>
-                {/* Naprawiono nachodzenie na siebie tekstu */}
-                <h2 style={{ color: '#ff9800', margin: 0 }}>Oczekujące Zgłoszenia RODO</h2>
-                <Link to="/admin" style={{ color: '#b3b3b3', textDecoration: 'none', fontWeight: 'bold' }}>&lt; Powrót do Panelu</Link>
+        <div className="max-w-4xl mx-auto">
+            {/* Nagłówek */}
+            <div className="flex justify-between items-center bg-spotify-card p-5 px-7 rounded-2xl mb-6 border border-spotify-border shadow-lg">
+                <div className="flex items-center gap-2.5">
+                    <ShieldAlert className="w-6 h-6 text-amber-500" />
+                    <h2 className="text-amber-500 text-xl font-bold m-0">Oczekujące Zgłoszenia RODO</h2>
+                </div>
+                <Link to="/admin" className="flex items-center gap-1 text-spotify-gray hover:text-white font-semibold text-sm transition-colors">
+                    <ArrowLeft className="w-4 h-4" />  Powrót do Panelu
+                </Link>
             </div>
 
-            {message && <p style={{ color: '#e91429', textAlign: 'center', fontWeight: 'bold' }}>{message}</p>}
+            {message && <p className="text-red-500 text-center font-semibold mb-4 text-sm">{message}</p>}
 
-            <div style={{ background: '#181818', padding: '20px', borderRadius: '12px' }}>
+            {/* Tabela żądań */}
+            <div className="bg-spotify-card p-6 rounded-2xl border border-spotify-border shadow-lg">
                 {pendingRequests.length === 0 && !message ? (
-                    <p style={{ textAlign: 'center', color: '#b3b3b3' }}>Brak oczekujących próśb od użytkowników. 🎉</p>
+                    <p className="text-center text-spotify-gray my-8 text-sm">Brak oczekujących próśb od użytkowników. </p>
                 ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse', color: 'white' }}>
+                    <table className="w-full border-collapse text-white text-left">
                         <thead>
-                        <tr style={{ borderBottom: '1px solid #282828', textAlign: 'left' }}>
-                            <th style={{ padding: '12px' }}>ID</th>
-                            <th style={{ padding: '12px' }}>Spotify ID</th>
-                            <th style={{ padding: '12px' }}>Żądanie</th>
-                            <th style={{ padding: '12px' }}>Akcja</th>
+                        <tr className="border-b border-neutral-800 text-spotify-gray text-xs uppercase tracking-wider">
+                            <th className="p-3 px-4">ID</th>
+                            <th className="p-3 px-4">Spotify ID</th>
+                            <th className="p-3 px-4">Żądanie</th>
+                            <th className="p-3 px-4">Akcja</th>
                         </tr>
                         </thead>
                         <tbody>
                         {pendingRequests.map(req => (
-                            <tr key={req.id} style={{ borderBottom: '1px solid #282828' }}>
-                                <td style={{ padding: '12px' }}>{req.id}</td>
-                                <td style={{ padding: '12px', fontWeight: 'bold' }}>{req.spotifyId}</td>
-                                <td style={{ padding: '12px' }}>Usuń starsze niż {req.daysToKeep} dni</td>
-                                <td style={{ padding: '12px', display: 'flex', gap: '10px' }}>
-                                    <button onClick={() => handleAction(req.id, 'approve')} style={{ background: '#1db954', border: 'none', padding: '8px 12px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}>Akceptuj</button>
-                                    <button onClick={() => handleAction(req.id, 'reject')} style={{ background: '#e91429', color: 'white', border: 'none', padding: '8px 12px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}>Odrzuć</button>
+                            <tr key={req.id} className="border-b border-neutral-900 hover:bg-neutral-900/30 transition-colors">
+                                <td className="p-3.5 px-4 text-sm">{req.id}</td>
+                                <td className="p-3.5 px-4 font-bold text-sm">{req.spotifyId}</td>
+                                <td className="p-3.5 px-4 text-sm">Usuń starsze niż {req.daysToKeep} dni</td>
+                                <td className="p-3.5 px-4 flex gap-2">
+                                    <button
+                                        onClick={() => handleAction(req.id, 'approve')}
+                                        className="inline-flex items-center gap-1 bg-spotify-green hover:bg-spotify-green-hover text-black font-bold py-1.5 px-3.5 rounded-full text-xs transition-colors cursor-pointer"
+                                    >
+                                        <Check className="w-3.5 h-3.5" /> Akceptuj
+                                    </button>
+                                    <button
+                                        onClick={() => handleAction(req.id, 'reject')}
+                                        className="inline-flex items-center gap-1 bg-red-600 hover:bg-red-500 text-white font-bold py-1.5 px-3.5 rounded-full text-xs transition-colors cursor-pointer"
+                                    >
+                                        <X className="w-3.5 h-3.5" /> Odrzuć
+                                    </button>
                                 </td>
                             </tr>
                         ))}

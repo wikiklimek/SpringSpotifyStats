@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { callApi } from '../utils/api';
+import { RefreshCw, ArrowLeft, ShieldAlert } from 'lucide-react';
 
 export default function UserHistory() {
     const [history, setHistory] = useState([]);
@@ -35,7 +36,7 @@ export default function UserHistory() {
                 setMessage(`✅ ${data.message}`);
             }
             loadData();
-        } catch (e) { setMessage(`❌ Błąd synchronizacji: ${e.message}`); }
+        } catch (e) { setMessage(` Błąd synchronizacji: ${e.message}`); }
     };
 
     const requestDeletion = async (days) => {
@@ -43,10 +44,10 @@ export default function UserHistory() {
             const res = await callApi(`/api/privacy/request-deletion?days=${days}`, { method: 'POST' }, navigate);
             if (res) {
                 const data = await res.json();
-                setMessage(`🛡️ ${data.message}`);
+                setMessage(` ${data.message}`);
             }
             loadData();
-        } catch (e) { setMessage(`❌ Błąd żądania RODO: ${e.message}`); }
+        } catch (e) { setMessage(` Błąd żądania RODO: ${e.message}`); }
     };
 
     const cancelRequest = async () => {
@@ -54,35 +55,59 @@ export default function UserHistory() {
             const res = await callApi('/api/privacy/withdraw', { method: 'POST' }, navigate);
             if (res) {
                 const data = await res.json();
-                setMessage(`✅ ${data.message}`);
+                setMessage(` ${data.message}`);
             }
             loadData();
-        } catch (e) { setMessage(`❌ Błąd anulowania: ${e.message}`); }
+        } catch (e) { setMessage(` Błąd anulowania: ${e.message}`); }
     };
 
     return (
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', background: '#181818', padding: '20px', borderRadius: '12px', marginBottom: '20px' }}>
-                <h1 style={{ color: '#1db954', margin: 0 }}>Historia Odsłuchań ⏱️</h1>
-                <Link to="/user" style={{ color: '#b3b3b3', textDecoration: 'none', fontWeight: 'bold' }}>Powrót do Statystyk</Link>
+        <div className="max-w-4xl mx-auto pb-10">
+            {/* Nagłówek */}
+            <div className="flex justify-between items-center bg-spotify-card p-5 px-7 rounded-2xl mb-5 border border-spotify-border shadow-lg">
+                <h1 className="text-spotify-green text-2xl font-bold m-0">Historia Odsłuchań </h1>
+                <Link to="/user" className="flex items-center gap-1 text-spotify-gray hover:text-white font-semibold text-sm transition-colors">
+                    <ArrowLeft className="w-4 h-4" />  Powrót do Statystyk
+                </Link>
             </div>
 
-            <div style={{ textAlign: 'center', background: '#282828', padding: '20px', borderRadius: '12px', marginBottom: '20px' }}>
-                <button onClick={syncHistory} style={{ background: '#1db954', color: 'black', border: 'none', padding: '10px 20px', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '15px' }}>🔄 Pobierz nowe z API Spotify</button>
-                {message && <p style={{ color: 'white', fontWeight: 'bold' }}>{message}</p>}
+            {/* Moduł synchronizacji i RODO */}
+            <div className="bg-spotify-card p-6 rounded-2xl mb-5 border border-spotify-border text-center shadow-lg">
+                <button
+                    onClick={syncHistory}
+                    className="inline-flex items-center gap-2 bg-spotify-green hover:bg-spotify-green-hover text-black py-3 px-6 rounded-full font-bold text-sm shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+                >
+                    <RefreshCw className="w-4 h-4" />  Pobierz nowe z API Spotify
+                </button>
+                {message && <p className="text-white font-semibold my-3 text-sm">{message}</p>}
 
-                <hr style={{ borderColor: '#444' }}/>
-                <h3 style={{ color: '#ff9800' }}>RODO - Zarządzanie Danymi</h3>
+                <div className="h-px bg-neutral-800 my-5"></div>
+
+                <div className="flex items-center justify-center gap-2 mb-3">
+                    <ShieldAlert className="w-4 h-4 text-amber-500" />
+                    <h3 className="text-amber-500 text-base font-semibold m-0">RODO - Zarządzanie Danymi</h3>
+                </div>
 
                 {activeRequest ? (
-                    <div>
-                        <p>Masz aktywne żądanie usunięcia starszych niż: <b>{activeRequest.daysToKeep} dni</b>.</p>
-                        <button onClick={cancelRequest} style={{ background: '#e91429', color: 'white', padding: '8px 15px', borderRadius: '5px', border: 'none', cursor: 'pointer' }}>Anuluj zapytanie</button>
+                    <div className="bg-neutral-900 p-4 rounded-xl inline-block border border-neutral-800">
+                        <p className="m-0 mb-3 text-sm">
+                            Masz aktywne żądanie usunięcia starszych niż: <b>{activeRequest.daysToKeep} dni</b>.
+                        </p>
+                        <button
+                            onClick={cancelRequest}
+                            className="bg-red-600 hover:bg-red-500 text-white py-2 px-5 rounded-full font-semibold text-xs transition-colors cursor-pointer"
+                        >
+                            Anuluj zapytanie
+                        </button>
                     </div>
                 ) : (
-                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                    <div className="flex gap-2.5 justify-center flex-wrap">
                         {[7, 30, 90, 180].map(days => (
-                            <button key={days} onClick={() => requestDeletion(days)} style={{ background: '#535353', color: 'white', padding: '8px 15px', borderRadius: '5px', border: 'none', cursor: 'pointer' }}>
+                            <button
+                                key={days}
+                                onClick={() => requestDeletion(days)}
+                                className="bg-neutral-800 hover:bg-neutral-700 text-white py-2 px-4 rounded-full border border-neutral-700 font-medium text-xs transition-colors cursor-pointer"
+                            >
                                 Usuń &gt; {days} dni
                             </button>
                         ))}
@@ -90,15 +115,22 @@ export default function UserHistory() {
                 )}
             </div>
 
-            <div style={{ background: '#181818', padding: '20px', borderRadius: '12px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead><tr style={{ borderBottom: '1px solid #333' }}><th>Tytuł</th><th>Artysta</th><th>Data Odsłuchania</th></tr></thead>
+            {/* Tabela historii */}
+            <div className="bg-spotify-card p-6 rounded-2xl border border-spotify-border shadow-lg">
+                <table className="w-full border-collapse text-left">
+                    <thead>
+                    <tr className="border-b border-neutral-800 text-spotify-gray text-xs uppercase tracking-wider">
+                        <th className="p-3 px-4">Tytuł</th>
+                        <th className="p-3 px-4">Artysta</th>
+                        <th className="p-3 px-4">Data Odsłuchania</th>
+                    </tr>
+                    </thead>
                     <tbody>
                     {history.map((h, i) => (
-                        <tr key={i} style={{ borderBottom: '1px solid #282828' }}>
-                            <td style={{ padding: '10px 0' }}>{h.track.name}</td>
-                            <td>{h.track.artists[0]?.name}</td>
-                            <td>{new Date(h.playedAt).toLocaleString()}</td>
+                        <tr key={i} className="border-b border-neutral-900/60 hover:bg-neutral-900/30 transition-colors">
+                            <td className="p-3.5 px-4 font-semibold text-white text-sm">{h.track?.name}</td>
+                            <td className="p-3.5 px-4 text-spotify-gray text-sm">{h.track?.artists?.[0]?.name}</td>
+                            <td className="p-3.5 px-4 text-spotify-gray text-xs">{new Date(h.playedAt).toLocaleString()}</td>
                         </tr>
                     ))}
                     </tbody>

@@ -29,7 +29,7 @@ describe('Komponent UserDashboard', () => {
         expect(screen.getByText('Wybierz kategorię statystyk!')).toBeInTheDocument();
 
         // WHEN: Użytkownik wirtualnie klika w przycisk
-        const topTracksBtn = screen.getByText('🔥 Top Utwory');
+        const topTracksBtn = screen.getByText('Top Utwory');
         fireEvent.click(topTracksBtn);
 
         // THEN: Czekamy (bo React podmienia stan asynchronicznie) aż pojawi się nasz wygenerowany utwór

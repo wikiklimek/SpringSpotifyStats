@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { callApi } from '../utils/api';
+import { ArrowLeft, Trash2, Filter } from 'lucide-react';
 
 export default function AdminUserDetail() {
     const { spotifyId } = useParams();
@@ -38,44 +39,73 @@ export default function AdminUserDetail() {
         .sort((a, b) => sortOrder === 'DESC' ? new Date(b.date) - new Date(a.date) : new Date(a.date) - new Date(b.date));
 
     return (
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', background: '#181818', padding: '20px', borderRadius: '12px', marginBottom: '20px' }}>
-                <h1 style={{ color: '#ff9800', margin: 0 }}>Dokumenty Użytkownika</h1>
-                <Link to="/admin" style={{ color: '#b3b3b3', textDecoration: 'none' }}>&lt; Powrót do listy</Link>
+        <div className="max-w-4xl mx-auto pb-10">
+            {/* Nagłówek */}
+            <div className="flex justify-between items-center bg-spotify-card p-5 px-7 rounded-2xl mb-5 border border-spotify-border shadow-lg">
+                <h1 className="text-amber-500 text-2xl font-bold m-0">Dokumenty Użytkownika</h1>
+                <Link to="/admin" className="flex items-center gap-1 text-spotify-gray hover:text-white font-semibold text-sm transition-colors">
+                    <ArrowLeft className="w-4 h-4" /> &lt; Powrót do listy
+                </Link>
             </div>
 
-            <div style={{ background: '#282828', padding: '20px', borderRadius: '12px', marginBottom: '20px', textAlign: 'center' }}>
-                <h3 style={{ margin: '0 0 15px 0' }}>Usuwanie z bazy dla tego użytkownika</h3>
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+            {/* Panel usuwania dla użytkownika */}
+            <div className="bg-neutral-900/90 p-5 rounded-2xl mb-5 text-center border border-neutral-800 shadow-md">
+                <div className="flex items-center justify-center gap-2 mb-3">
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                    <h3 className="m-0 text-white text-sm font-semibold">Usuwanie z bazy dla tego użytkownika</h3>
+                </div>
+                <div className="flex gap-2.5 justify-center flex-wrap">
                     {[7, 30, 90, 180].map(days => (
-                        <button key={days} onClick={() => deleteLocal(days)} style={{ background: '#e91429', color: 'white', padding: '8px 15px', borderRadius: '5px', border: 'none', cursor: 'pointer' }}>
+                        <button
+                            key={days}
+                            onClick={() => deleteLocal(days)}
+                            className="bg-red-600 hover:bg-red-500 text-white py-2 px-4 rounded-full font-semibold text-xs transition-colors cursor-pointer shadow-sm"
+                        >
                             Usuń &gt; {days} dni
                         </button>
                     ))}
                 </div>
             </div>
 
-            <div style={{ background: '#181818', padding: '20px', borderRadius: '12px' }}>
-                <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
-                    <select value={filterType} onChange={e => setFilterType(e.target.value)} style={{ padding: '8px', background: '#333', color: 'white', border: 'none', borderRadius: '4px' }}>
+            {/* Filtry i Tabela */}
+            <div className="bg-spotify-card p-6 rounded-2xl border border-spotify-border shadow-lg">
+                <div className="flex items-center gap-3 mb-5">
+                    <Filter className="w-4 h-4 text-spotify-gray" />
+                    <select
+                        value={filterType}
+                        onChange={e => setFilterType(e.target.value)}
+                        className="bg-neutral-900 border border-neutral-800 text-white text-xs rounded-lg p-2 focus:outline-none"
+                    >
                         <option value="ALL">Wszystkie typy</option>
                         <option value="TRACKS">Tylko Tracks</option>
                         <option value="ARTISTS">Tylko Artists</option>
                     </select>
-                    <select value={sortOrder} onChange={e => setSortOrder(e.target.value)} style={{ padding: '8px', background: '#333', color: 'white', border: 'none', borderRadius: '4px' }}>
+                    <select
+                        value={sortOrder}
+                        onChange={e => setSortOrder(e.target.value)}
+                        className="bg-neutral-900 border border-neutral-800 text-white text-xs rounded-lg p-2 focus:outline-none"
+                    >
                         <option value="DESC">Najnowsze najpierw</option>
                         <option value="ASC">Najstarsze najpierw</option>
                     </select>
                 </div>
 
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead><tr style={{ borderBottom: '1px solid #333' }}><th>Typ</th><th>Data w bazie</th><th>Ilość elementów</th></tr></thead>
+                <table className="w-full border-collapse text-left">
+                    <thead>
+                    <tr className="border-b border-neutral-800 text-spotify-gray text-xs uppercase tracking-wider">
+                        <th className="p-3 px-4">Typ</th>
+                        <th className="p-3 px-4">Data w bazie</th>
+                        <th className="p-3 px-4">Ilość elementów</th>
+                    </tr>
+                    </thead>
                     <tbody>
                     {filteredDocs.map((d, i) => (
-                        <tr key={i} style={{ borderBottom: '1px solid #282828' }}>
-                            <td style={{ padding: '10px 0', color: d.type === 'TRACKS' ? '#1db954' : '#ff9800', fontWeight: 'bold' }}>{d.type}</td>
-                            <td>{d.date}</td>
-                            <td>{d.topTracks ? d.topTracks.length : d.topArtists?.length}</td>
+                        <tr key={i} className="border-b border-neutral-900 hover:bg-neutral-900/30 transition-colors">
+                            <td className={`p-3.5 px-4 font-bold text-sm ${d.type === 'TRACKS' ? 'text-spotify-green' : 'text-amber-500'}`}>
+                                {d.type}
+                            </td>
+                            <td className="p-3.5 px-4 text-sm text-white">{d.date}</td>
+                            <td className="p-3.5 px-4 text-sm text-spotify-gray">{d.topTracks ? d.topTracks.length : d.topArtists?.length}</td>
                         </tr>
                     ))}
                     </tbody>

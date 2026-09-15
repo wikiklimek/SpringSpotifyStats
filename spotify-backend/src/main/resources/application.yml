@@ -4,7 +4,7 @@ server:
 
 spring:
   datasource:
-    # Jeśli zmienna POSTGRES_HOST nie istnieje, użyj "localhost" (dla IntelliJ)
+    # if POSTGRES_HOST not exists, use "localhost" (in IntelliJ)
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/spotify_db
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
@@ -19,7 +19,7 @@ spring:
 
   data:
     mongodb:
-      # Zmienna MONGO_HOST przełącza adres między Dockerem a IntelliJ
+      # varaible MONGO_HOST determines if Dockerem or IntelliJ
       uri: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_HOST:localhost}:27017/spotify_db?authSource=admin
 
 
