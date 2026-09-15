@@ -1,10 +1,11 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
-import AdminRequests from './AdminRequests';
-import * as api from '../utils/api'; // Pobieramy Twój moduł api.js
+import AdminRequests from '../../pages/AdminRequests.jsx';
+import * as api from '../../utils/api.js'; // Pobieramy Twój moduł api.js
+import '@testing-library/jest-dom';
 
-vi.mock('../utils/api', () => ({
+vi.mock('../../utils/api', () => ({
     callApi: vi.fn()
 }));
 

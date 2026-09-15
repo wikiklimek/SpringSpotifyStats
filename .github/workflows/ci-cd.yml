@@ -2,43 +2,53 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "master" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "master" ]
 
 jobs:
-  backend-tests:
+  backend-build-and-test:
+    name: Backend (Java 25 + Testcontainers)
     runs-on: ubuntu-latest
+
     steps:
-      - name: Pobranie kodu
+      - name: Pobranie kodu repozytorium
         uses: actions/checkout@v4
 
-      - name: Konfiguracja Javy 25
+      - name: Konfiguracja JDK 25
         uses: actions/setup-java@v4
         with:
-          java-version: '25-ea' # Używamy Early Access dla Javy 25
+          java-version: '25'
           distribution: 'temurin'
           cache: maven
 
-      - name: Uruchomienie testów Backend (Maven)
+      - name: Uruchomienie testów i budowanie aplikacji (JAR)
         working-directory: ./spotify-backend
-        run: mvn test
+        run: mvn clean verify
 
-  frontend-tests:
+  frontend-build-and-test:
+    name: Frontend (React + Vitest)
     runs-on: ubuntu-latest
+
     steps:
-      - name: Pobranie kodu
+      - name: Pobranie kodu repozytorium
         uses: actions/checkout@v4
 
-      - name: Konfiguracja Node.js 20
+      - name: Konfiguracja Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 22
           cache: 'npm'
-          cache-dependency-path: './spotify-frontend/package-lock.json'
+          cache-dependency-path: ./spotify-frontend/package-lock.json
 
-      - name: Instalacja zależności i uruchomienie testów Frontend
+      - name: Instalacja zależności frontendu
         working-directory: ./spotify-frontend
-        run: |
-          npm ci
-          npm test
+        run: npm ci
+
+      - name: Uruchomienie testów jednostkowych Vitest
+        working-directory: ./spotify-frontend
+        run: npx vitest run
+
+      - name: Weryfikacja budowania produkcyjnego (Vite build)
+        working-directory: ./spotify-frontend
+        run: npm run build

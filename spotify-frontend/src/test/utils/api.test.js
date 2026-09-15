@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { callApi } from './api';
-import { API_BASE_URL } from './config';
+import { callApi } from '../../utils/api.js';
+import { API_BASE_URL } from '../../utils/config.js';
 
 describe('Funkcja callApi', () => {
     it('powinna rzucić błąd 401 z odpowiednim komunikatem', async () => {

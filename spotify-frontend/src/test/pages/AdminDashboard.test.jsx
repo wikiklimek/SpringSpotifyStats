@@ -1,11 +1,12 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
-import AdminDashboard from './AdminDashboard';
-import * as api from '../utils/api';
+import AdminDashboard from '../../pages/AdminDashboard.jsx';
+import * as api from '../../utils/api.js';
+import '@testing-library/jest-dom';
 
 // Podmieniamy funkcję komunikującą się z backendem
-vi.mock('../utils/api', () => ({
+vi.mock('../../utils/api', () => ({
     callApi: vi.fn()
 }));
 

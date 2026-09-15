@@ -1,11 +1,12 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
-import UserDashboard from './UserDashboard';
-import * as api from '../utils/api'; // Pobieramy Twój moduł api.js[cite: 6]
+import UserDashboard from '../../pages/UserDashboard.jsx';
+import * as api from '../../utils/api.js'; // Pobieramy Twój moduł api.js[cite: 6]
+import '@testing-library/jest-dom';
 
 // Mockujemy zewnętrzną funkcję, by nie strzelać fizycznie do backendu!
-vi.mock('../utils/api', () => ({
+vi.mock('../../utils/api', () => ({
     callApi: vi.fn()
 }));
 

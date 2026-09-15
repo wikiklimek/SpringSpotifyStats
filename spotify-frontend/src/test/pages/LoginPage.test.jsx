@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
-import LoginPage from './LoginPage';
+import LoginPage from '../../pages/LoginPage.jsx';
+import '@testing-library/jest-dom';
 
 describe('Komponent LoginPage', () => {
     it('powinien wyrenderować przycisk logowania przez Spotify', () => {
