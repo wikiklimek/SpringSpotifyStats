@@ -1,4 +1,4 @@
-# Spring Spotify Stats — Full-Stack Analytics Application
+# Spring Spotify Stats 
 
 ## 1. Project Overview
 
